@@ -1,15 +1,20 @@
 #! /usr/bin/env python3
 
+import sys
 import re
 from pprint import pprint
 
 def main():
 
+    if len(sys.argv) != 2:
+        print("Usage: python3 parser.py combat.log")
+        return sys.exit(1)
+
     # m = re.search(r'(?P<time>\d{2}:\d{2})<(?P<user>[@+]?[^>]*)>(?P<message>.*)', s)
     combat_pattern = re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] (?P<dude_hurt>[\S\s]+) took (?P<damages>\S+) damage from (?P<damage_dealer>[\S ]+)\s+')
     fighters = dict()
     #damages_taken = dict()
-    with open("logs/combat-raid1.log", "r") as clog:
+    with open(sys.argv[1], "r") as clog:
         for line in clog:
             log_split = re.match(combat_pattern, line)
             if log_split:
@@ -67,10 +72,14 @@ def main():
 
 
 
-    sorted_fighters = sorted(fighters.items(), key=lambda kv: kv[1])
+    sorted_fighters = sorted(fighters.items(), key=lambda kv: kv[1], reverse=True)
     #print(fighters)
-    pprint(sorted_fighters)
+    #pprint(sorted_fighters)
     #print(damages_taken)
+    print("Overall damages (ordered from most to least): \n")
+    for guy, dmgs in sorted_fighters:
+        print(" "*4,guy,dmgs)
+    return sys.exit(0)
 
 if __name__ == "__main__":
     main()
