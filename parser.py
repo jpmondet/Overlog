@@ -1,19 +1,12 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK
+from os import access, R_OK, system, name as nme
+from time import sleep
 import re
-from pprint import pprint
+from argparse import ArgumentParser
 
-def main():
-
-    if len(sys.argv) != 2:
-        print("Usage: python3 parser.py path/to/combat.log")
-        return sys.exit(1)
-    if not access(sys.argv[1], R_OK):
-        print("The file {} is not readable. Please enter a valid file.\n".format(sys.argv[1]))
-        return sys.exit(2)
-
+def log_parsing(args):
     combat_pattern = re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] (?P<dude_hurt>[\S\s]+) took (?P<damages>\S+) damage from (?P<damage_dealer>[\S ]+)\s+')
     fighters = dict()
     fighters_criticals = dict()
@@ -21,8 +14,7 @@ def main():
     heals_given = dict()
     heals_given_crits = dict()
     heals_received = dict()
-
-    with open(sys.argv[1], "r") as clog:
+    with open(args.logfile, "r") as clog:
         for line in clog:
             critical = False
             log_split = re.match(combat_pattern, line)
@@ -81,29 +73,54 @@ def main():
     sorted_healers_crits = sorted(heals_given_crits.items(), key=lambda kv: kv[1], reverse=True)
     sorted_healed = sorted(heals_received.items(), key=lambda kv: kv[1], reverse=True)
 
-    print("\nOverall damages (crits included) dealt (ordered from most to least): \n")
+    print("\nOverall damages (crits included) dealt (ordered from most to least):")
     for guy, dmgs in sorted_fighters:
         print(" "*4,guy,dmgs)
 
-    print("\nOverall critical dmgs dealt (ordered from most to least): \n")
+    print("\nOverall critical dmgs dealt (ordered from most to least):")
     for guy, dmgs in sorted_fighters_crits:
         print(" "*4,guy,dmgs)
 
-    print("\nOverall damages Received (ordered from most to least): \n")
+    print("\nOverall damages Received (ordered from most to least):")
     for guy, dmgs in sorted_takers:
         print(" "*4,guy,dmgs)
 
-    print("\nOverall heals (crits included) given (ordered from most to least): \n")
+    print("\nOverall heals (crits included) given (ordered from most to least):")
     for guy, dmgs in sorted_healers:
         print(" "*4,guy,dmgs)
 
-    print("\nOverall critical heals given (ordered from most to least): \n")
+    print("\nOverall critical heals given (ordered from most to least):")
     for guy, dmgs in sorted_healers_crits:
         print(" "*4,guy,dmgs)
 
-    print("\nOverall heals received (ordered from most to least): \n")
+    print("\nOverall heals received (ordered from most to least):")
     for guy, dmgs in sorted_healed:
         print(" "*4,guy,dmgs)
+
+
+def main():
+
+    # TODO: Add possibility to show only some stats
+    parser = ArgumentParser(description="Parse combat logs from OrbusVR.")
+    parser.add_argument("logfile", type=str, help="The log file to parse", default="")
+    parser.add_argument("-f", "--follow", help="Keep watching the file", action="store_true")
+    parser.add_argument("-r", "--refresh", help="When watching the file, set the refresh time (by default, it refreshes every 30 sec)", type=int, default=3)
+    #args_grp = parser.add_mutually_exclusive_group()
+    #args_grp = 
+    args = parser.parse_args()
+
+    if not access(args.logfile, R_OK):
+        print("The file {} is not readable. Please enter a valid file.\n".format(args.logfile))
+        return sys.exit(1)
+
+    if args.follow:
+        print("Ok, going loopy (keeps looking the file & refreshing the stats accordingly)")
+        while True:
+            sleep(args.refresh)
+            system('cls' if nme == 'nt' else 'clear')
+            log_parsing(args)
+    else:
+        log_parsing(args)
 
     return sys.exit(0)
 
