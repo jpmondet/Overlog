@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK, system, name as nme
+from os import access, R_OK, system, getenv, name as nme
 from time import sleep
 import re
 from argparse import ArgumentParser
@@ -73,38 +73,60 @@ def log_parsing(args):
     sorted_healers_crits = sorted(heals_given_crits.items(), key=lambda kv: kv[1], reverse=True)
     sorted_healed = sorted(heals_received.items(), key=lambda kv: kv[1], reverse=True)
 
-    print("\nOverall damages (crits included) dealt (ordered from most to least):")
-    for guy, dmgs in sorted_fighters:
-        print(" "*4,guy,dmgs)
+    all_stats = True
+    if (args.dmgs or 
+        args.dmgs_crits or 
+        args.dmgs_received or 
+        args.heals or 
+        args.heals_crits or 
+        args.heals_received):
+        all_stats = False
 
-    print("\nOverall critical dmgs dealt (ordered from most to least):")
-    for guy, dmgs in sorted_fighters_crits:
-        print(" "*4,guy,dmgs)
+    if args.dmgs or all_stats:
+        print("\nOverall damages (crits included) dealt (ordered from most to least):")
+        for guy, dmgs in sorted_fighters:
+            print(" "*4,guy,dmgs)
 
-    print("\nOverall damages Received (ordered from most to least):")
-    for guy, dmgs in sorted_takers:
-        print(" "*4,guy,dmgs)
+    if args.dmgs_crits or all_stats:
+        print("\nOverall critical dmgs dealt (ordered from most to least):")
+        for guy, dmgs in sorted_fighters_crits:
+            print(" "*4,guy,dmgs)
 
-    print("\nOverall heals (crits included) given (ordered from most to least):")
-    for guy, dmgs in sorted_healers:
-        print(" "*4,guy,dmgs)
+    if args.dmgs_received or all_stats:
+        print("\nOverall damages Received (ordered from most to least):")
+        for guy, dmgs in sorted_takers:
+            print(" "*4,guy,dmgs)
 
-    print("\nOverall critical heals given (ordered from most to least):")
-    for guy, dmgs in sorted_healers_crits:
-        print(" "*4,guy,dmgs)
+    if args.heals_received or all_stats:
+        print("\nOverall heals received (ordered from most to least):")
+        for guy, dmgs in sorted_healed:
+            print(" "*4,guy,dmgs)
 
-    print("\nOverall heals received (ordered from most to least):")
-    for guy, dmgs in sorted_healed:
-        print(" "*4,guy,dmgs)
+    if args.heals or all_stats:
+        print("\nOverall heals (crits included) given (ordered from most to least):")
+        for guy, dmgs in sorted_healers:
+            print(" "*4,guy,dmgs)
 
+    if args.heals_crits or all_stats:
+        print("\nOverall critical heals given (ordered from most to least):")
+        for guy, dmgs in sorted_healers_crits:
+            print(" "*4,guy,dmgs)
 
 def main():
 
-    # TODO: Add possibility to show only some stats
-    parser = ArgumentParser(description="Parse combat logs from OrbusVR.")
-    parser.add_argument("logfile", type=str, help="The log file to parse", default="")
+    user_path = getenv("USERPROFILE")
+
+    parser = ArgumentParser(prog="overlog.exe", description="Parse combat logs from OrbusVR and, by default, displays all the stats (overall dmgs,dmgs_received, heals and criticals). You can filter the stats with options.")
+    parser.add_argument("-l", "--logfile", type=str, help="The log file to parse", default=user_path+"\AppData\LocalLow\Orbus Online, LLC\OrbusVR\combat.log")
     parser.add_argument("-f", "--follow", help="Keep watching the file", action="store_true")
     parser.add_argument("-r", "--refresh", help="When watching the file, set the refresh time (by default, it refreshes every 30 sec)", type=int, default=3)
+    parser.add_argument("-d", "--dmgs", help="Display the overall dmgs", action="store_true")
+    parser.add_argument("-dc", "--dmgs_crits", help="Display the overall critical dmgs", action="store_true")
+    parser.add_argument("-dr", "--dmgs_received", help="Display the overall dmgs received", action="store_true")
+    parser.add_argument("-hr", "--heals_received", help="Display the overall heals received", action="store_true")
+    parser.add_argument("-hl", "--heals", help="Display the overall heals provided", action="store_true")
+    parser.add_argument("-hlc", "--heals_crits", help="Display the overall critical heals provided", action="store_true")
+    parser.add_argument('--version', action='version', version='%(prog)s v0.01')
     #args_grp = parser.add_mutually_exclusive_group()
     #args_grp = 
     args = parser.parse_args()
@@ -121,6 +143,9 @@ def main():
             log_parsing(args)
     else:
         log_parsing(args)
+
+    if nme == 'nt':
+        system('pause')
 
     return sys.exit(0)
 
