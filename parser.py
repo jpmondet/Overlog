@@ -1,12 +1,14 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK, system, getenv, name as nme
+from os import access, R_OK, system, getenv, get_terminal_size, name as nme
 from time import sleep
 import re
 from argparse import ArgumentParser
 
 def log_parsing(args):
+    if nme == 'nt':
+        system('mode con: lines=800')
     combat_pattern = re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] (?P<dude_hurt>[\S\s]+) took (?P<damages>\S+) damage from (?P<damage_dealer>[\S ]+)\s+')
     fighters = dict()
     fighters_criticals = dict()
@@ -114,12 +116,15 @@ def log_parsing(args):
 
 def main():
 
-    user_path = getenv("USERPROFILE")
+    if (nme == 'nt'):
+        user_path = getenv("USERPROFILE")
+    else:
+        user_path = ""
 
     parser = ArgumentParser(prog="overlog.exe", description="Parse combat logs from OrbusVR and, by default, displays all the stats (overall dmgs,dmgs_received, heals and criticals). You can filter the stats with options.")
     parser.add_argument("-l", "--logfile", type=str, help="The log file to parse", default=user_path+"\AppData\LocalLow\Orbus Online, LLC\OrbusVR\combat.log")
     parser.add_argument("-f", "--follow", help="Keep watching the file", action="store_true")
-    parser.add_argument("-r", "--refresh", help="When watching the file, set the refresh time (by default, it refreshes every 30 sec)", type=int, default=3)
+    parser.add_argument("-r", "--refresh", help="When watching the file, set the refresh time (by default, it refreshes every 30 sec)", type=int, default=30)
     parser.add_argument("-d", "--dmgs", help="Display the overall dmgs", action="store_true")
     parser.add_argument("-dc", "--dmgs_crits", help="Display the overall critical dmgs", action="store_true")
     parser.add_argument("-dr", "--dmgs_received", help="Display the overall dmgs received", action="store_true")
@@ -127,8 +132,6 @@ def main():
     parser.add_argument("-hl", "--heals", help="Display the overall heals provided", action="store_true")
     parser.add_argument("-hlc", "--heals_crits", help="Display the overall critical heals provided", action="store_true")
     parser.add_argument('--version', action='version', version='%(prog)s v0.01')
-    #args_grp = parser.add_mutually_exclusive_group()
-    #args_grp = 
     args = parser.parse_args()
 
     if not access(args.logfile, R_OK):
@@ -138,9 +141,9 @@ def main():
     if args.follow:
         print("Ok, going loopy (keeps looking the file & refreshing the stats accordingly)")
         while True:
-            sleep(args.refresh)
             system('cls' if nme == 'nt' else 'clear')
             log_parsing(args)
+            sleep(args.refresh)
     else:
         log_parsing(args)
 
