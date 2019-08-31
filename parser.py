@@ -21,6 +21,7 @@ def log_parsing(args):
             critical = False
             log_split = re.match(combat_pattern, line)
             if log_split:
+                # Unpacking the log line
                 time = log_split.group("time")
                 damages = (int)(log_split.group("damages"))
                 dude_hurt = log_split.group("dude_hurt")
@@ -29,51 +30,67 @@ def log_parsing(args):
                     critical = True
                     damage_dealer = ''.join(damage_dealer.split()[:-1])
                 if "(" in damage_dealer or "Unknown" in damage_dealer:
+                    # The damage_dealer is a mob or a weird spell
+
                     if "(" in dude_hurt:
-                        # Bugged log line
+                        # Bugged log line (players are not allowed to have
+                        # parenthesis in their name)
                         continue
 
-                    # The damage_dealer is a mob or a weird spell
                     # We update the damages_taken by players
                     if damages_taken.get(dude_hurt):
-                        damages_taken[dude_hurt] = (int)(damages_taken[dude_hurt]) + damages
+                        total_dmgs = (int)(damages_taken[dude_hurt][0]) + damages
+                        nbr_hits = damages_taken[dude_hurt][1] + 1
+                        damages_taken[dude_hurt] = (total_dmgs, nbr_hits)
                     else:
-                        damages_taken[dude_hurt] = damages
+                        damages_taken[dude_hurt] = (damages, 1)
                     continue
 
                 if damages > 0:
                     if fighters.get(damage_dealer):
-                        fighters[damage_dealer] = (int)(fighters[damage_dealer]) + damages
+                        total_dmgs = (int)(fighters[damage_dealer][0]) + damages
+                        nbr_hits = fighters[damage_dealer][1] + 1
+                        fighters[damage_dealer] = (total_dmgs, nbr_hits)
                     else:
-                        fighters[damage_dealer] = damages
+                        fighters[damage_dealer] = (damages, 1)
                     if critical:
                         if fighters_criticals.get(damage_dealer):
-                            fighters_criticals[damage_dealer] = (int)(fighters_criticals[damage_dealer]) + damages
+                            total_crits = (int)(fighters_criticals[damage_dealer][0]) + damages
+                            nbr_crits = fighters_criticals[damage_dealer][1] + 1
+                            fighters_criticals[damage_dealer] = (total_crits, nbr_crits)
                         else:
-                            fighters_criticals[damage_dealer] = damages
+                            fighters_criticals[damage_dealer] = (damages, 1)
                 elif damages < 0:
                     damages = -damages
                     if heals_given.get(damage_dealer):
-                        heals_given[damage_dealer] = (int)(heals_given[damage_dealer]) + damages
+                        tot_heals = (int)(heals_given[damage_dealer][0]) + damages
+                        nbr_heals = heals_given[damage_dealer][1] + 1
+                        heals_given[damage_dealer] = (tot_heals, nbr_heals)
                     else:
-                        heals_given[damage_dealer] = damages
+                        heals_given[damage_dealer] = (damages, 1)
+
                     if heals_received.get(dude_hurt):
-                        heals_received[dude_hurt] = (int)(heals_received[dude_hurt]) + damages
+                        tot_heals = (int)(heals_received[dude_hurt][0]) + damages
+                        nbr_heals = heals_received[dude_hurt][1] + 1
+                        heals_received[dude_hurt] = (tot_heals, nbr_heals)
                     else:
-                        heals_received[dude_hurt] = damages
+                        heals_received[dude_hurt] = (damages, 1)
+
                     if critical:
                         if heals_given_crits.get(damage_dealer):
-                            heals_given_crits[damage_dealer] = (int)(heals_given_crits[damage_dealer]) + damages
+                            tot_heals_crit = (int)(heals_given_crits[damage_dealer][0]) + damages
+                            nbr_crit_heals = heals_given_crits[damage_dealer][1] + 1
+                            heals_given_crits[damage_dealer] = (tot_heals_crit, nbr_crit_heals)
                         else:
-                            heals_given_crits[damage_dealer] = damages
+                            heals_given_crits[damage_dealer] = (damages, 1)
 
 
-    sorted_fighters = sorted(fighters.items(), key=lambda kv: kv[1], reverse=True)
-    sorted_fighters_crits = sorted(fighters_criticals.items(), key=lambda kv: kv[1], reverse=True)
-    sorted_takers = sorted(damages_taken.items(), key=lambda kv: kv[1], reverse=True)
-    sorted_healers = sorted(heals_given.items(), key=lambda kv: kv[1], reverse=True)
-    sorted_healers_crits = sorted(heals_given_crits.items(), key=lambda kv: kv[1], reverse=True)
-    sorted_healed = sorted(heals_received.items(), key=lambda kv: kv[1], reverse=True)
+    sorted_fighters = sorted(fighters.items(), key=lambda kv: kv[1][0], reverse=True)
+    sorted_fighters_crits = sorted(fighters_criticals.items(), key=lambda kv: kv[1][0], reverse=True)
+    sorted_takers = sorted(damages_taken.items(), key=lambda kv: kv[1][0], reverse=True)
+    sorted_healers = sorted(heals_given.items(), key=lambda kv: kv[1][0], reverse=True)
+    sorted_healers_crits = sorted(heals_given_crits.items(), key=lambda kv: kv[1][0], reverse=True)
+    sorted_healed = sorted(heals_received.items(), key=lambda kv: kv[1][0], reverse=True)
 
     all_stats = True
     if (args.dmgs or 
@@ -87,32 +104,32 @@ def log_parsing(args):
     if args.dmgs or all_stats:
         print("\nOverall damages (crits included) dealt (ordered from most to least):")
         for guy, dmgs in sorted_fighters:
-            print(" "*4,guy,dmgs)
+            print("    {0:15} {1:10} ({2:6} hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.dmgs_crits or all_stats:
         print("\nOverall critical dmgs dealt (ordered from most to least):")
         for guy, dmgs in sorted_fighters_crits:
-            print(" "*4,guy,dmgs)
+            print("    {0:15} {1:10} ({2:6} crit hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.dmgs_received or all_stats:
         print("\nOverall damages Received (ordered from most to least):")
         for guy, dmgs in sorted_takers:
-            print(" "*4,guy,dmgs)
+            print("    {0:15} {1:10} ({2:6} hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.heals_received or all_stats:
         print("\nOverall heals received (ordered from most to least):")
         for guy, dmgs in sorted_healed:
-            print(" "*4,guy,dmgs)
+            print("    {0:15} {1:10} ({2:6} heals (or ticks from heals over time))".format(guy,dmgs[0],dmgs[1]))
 
     if args.heals or all_stats:
         print("\nOverall heals (crits included) given (ordered from most to least):")
         for guy, dmgs in sorted_healers:
-            print(" "*4,guy,dmgs)
+            print("    {0:15} {1:10} ({2:6} heals (or ticks from heals over time))".format(guy,dmgs[0],dmgs[1]))
 
     if args.heals_crits or all_stats:
         print("\nOverall critical heals given (ordered from most to least):")
         for guy, dmgs in sorted_healers_crits:
-            print(" "*4,guy,dmgs)
+            print("    {0:15} {1:10} ({2:6} crit heals (or ticks from heals over time))".format(guy,dmgs[0],dmgs[1]))
 
 def main():
 
