@@ -1,4 +1,5 @@
 # Overlog
+
 OrbusVR combat log parser
 
 ## Usage: 
@@ -35,7 +36,7 @@ After that path written automatically, you can add `-h` to have a look to the op
 
 ```
 usage: overlog.exe [-h] [-l LOGFILE] [-f] [-r REFRESH] [-d] [-dc] [-dr] [-hr]
-                   [-hl] [-hlc] [--version]
+                   [-hl] [-hlc] [-m] [-lo] [--version]
 
 Parse combat logs from OrbusVR and, by default, displays all the stats
 (overall dmgs,dmgs_received, heals and criticals). You can filter the stats
@@ -56,6 +57,10 @@ optional arguments:
                         Display the overall heals received
   -hl, --heals          Display the overall heals provided
   -hlc, --heals_crits   Display the overall critical heals provided
+  -m, --misc_infos      Display some other infos we can find in the log file
+                        (like xp/gold/rep, nbr of dungeons, time in combat,
+                        maybe more?)
+  -lo, --loots          Display all the loots acquired
   --version             show program's version number and exit
 ```
 
@@ -108,12 +113,35 @@ For example, let's say you are a healer and you don't want to see the damages do
 
 `C:\Whatever-path-you-have\overlog.exe -hr -hl -hlc`
 
+##### Display more infos about the session
+
+**/!\ Preliminaries must have been done**
+
+Using the `-m` flag, you will have some miscellaneous informations that could be of some use, for example : 
+
+`C:\Whatever-path-you-have\overlog.exe -m`
+
+```
+You won 16404 XP, 3046 Dram and 10 Reputation on this session! :-)
+You even completed 1 dungeons ! Amazing !
+And btw, you were in combat for 1:36:50.602000 hour(s)
+```
+(Note that the combat time is the time you were ACTUALLY fighting in combat mode, not the time in a dungeon or something like that)
+
+
+##### Display the loots you acquired during the session
+
+**/!\ Preliminaries must have been done**
+
+By using the `-lo` flag, you can quickly display all the loots you acquired in the whole `combat.log`.
+
+It could be of some use for farmers (or to validate `luck` calculations maybe ;-) )
+
 ##### Any combination of options
 
 All the options shown above can be mixed up, for example the following will work : 
 
-`C:\Whatever-path-you-have\overlog.exe -f -r 10 -d -hlc`
-
+`C:\Whatever-path-you-have\overlog.exe -f -r 10 -d -hlc -m`
 
 ### Python3 users (linux/windows/...)
 
