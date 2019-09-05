@@ -152,6 +152,24 @@ def log_parsing(args):
 	sorted_healers_crits = sorted(heals_given_crits.items(), key=lambda kv: kv[1][0], reverse=True)
 	sorted_healed = sorted(heals_received.items(), key=lambda kv: kv[1][0], reverse=True)
 
+	# stats
+	stats = {
+		"sorted_fighters":sorted_fighters,
+		"sorted_fighters_crits":sorted_fighters_crits,
+		"sorted_takers":sorted_takers,
+		"sorted_healers":sorted_healers,
+		"sorted_healers_crits":sorted_healers_crits,
+		"sorted_healed":sorted_healed,
+		"loots":loots,
+		"tot_xp":tot_xp,
+		"tot_dram":tot_dram,
+		"tot_rep":tot_rep,
+		"tot_dungeons":tot_dungeons,
+		"tot_combat_time":tot_combat_time
+	}
+	return stats
+
+def log_print(args, stats):
 	all_stats = True
 	if (args.dmgs or
 		args.dmgs_crits or
@@ -165,47 +183,47 @@ def log_parsing(args):
 
 	if args.dmgs or all_stats:
 		print("\nOverall damages (crits included) dealt (ordered from most to least):")
-		for guy, dmgs in sorted_fighters:
+		for guy, dmgs in stats["sorted_fighters"]:
 			print("    {0:15} {1:10} ({2:6} hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
 	if args.dmgs_crits or all_stats:
 		print("\nOverall critical dmgs dealt (ordered from most to least):")
-		for guy, dmgs in sorted_fighters_crits:
+		for guy, dmgs in stats["sorted_fighters_crits"]:
 			print("    {0:15} {1:10} ({2:6} crit hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
 	if args.dmgs_received or all_stats:
 		print("\nOverall damages Received (ordered from most to least):")
-		for guy, dmgs in sorted_takers:
+		for guy, dmgs in stats["sorted_takers"]:
 			print("    {0:15} {1:10} ({2:6} hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
 	if args.heals_received or all_stats:
 		print("\nOverall heals received (ordered from most to least):")
-		for guy, dmgs in sorted_healed:
+		for guy, dmgs in stats["sorted_healed"]:
 			print("    {0:15} {1:10} ({2:6} heals (or ticks from HoT))".format(guy,dmgs[0],dmgs[1]))
 
 	if args.heals or all_stats:
 		print("\nOverall heals (crits included) given (ordered from most to least):")
-		for guy, dmgs in sorted_healers:
+		for guy, dmgs in stats["sorted_healers"]:
 			print("    {0:15} {1:10} ({2:6} heals (or ticks from HoT))".format(guy,dmgs[0],dmgs[1]))
 
 	if args.heals_crits or all_stats:
 		print("\nOverall critical heals given (ordered from most to least):")
-		for guy, dmgs in sorted_healers_crits:
+		for guy, dmgs in stats["sorted_healers_crits"]:
 			print("    {0:15} {1:10} ({2:6} crit heals (or ticks from HoT))".format(guy,dmgs[0],dmgs[1]))
 
 	if args.loots:
 		if loots:
 			print("\n\nWow, what a lucky person you are, you've acquired : ")
-			for loot in loots:
+			for loot in stats["loots"]:
 				print("    - {}".format(loot))
 		else:
 			print("Oh, no loots during this session :-(")
 
 	if args.misc_infos:
-		print("\n\nYou won {} XP, {} Dram and {} Reputation on this session! :-)".format(tot_xp, tot_dram, tot_rep))
-		if tot_dungeons > 0:
-			print("You even completed {} dungeons ! Amazing !".format(tot_dungeons))
-		print("And btw, you were in combat for {} hour(s)".format(tot_combat_time))
+		print("\n\nYou won {} XP, {} Dram and {} Reputation on this session! :-)".format(stats["tot_xp"], stats["tot_dram"], stats["tot_rep"]))
+		if stats["tot_dungeons"] > 0:
+			print("You even completed {} dungeons ! Amazing !".format(stats["tot_dungeons"]))
+		print("And btw, you were in combat for {} hour(s)".format(stats["tot_combat_time"]))
 
 
 def main():
@@ -238,11 +256,10 @@ def main():
 		print("Ok, going loopy (keeps looking the file & refreshing the stats accordingly)")
 		while True:
 			system('cls' if nme == 'nt' else 'clear')
-			log_parsing(args)
+			log_print(args, log_parsing(args))
 			sleep(args.refresh)
 	else:
-		log_parsing(args)
-
+		log_print(args, log_parsing(args))
 	if nme == 'nt':
 		system('pause')
 
