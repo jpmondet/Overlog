@@ -7,7 +7,7 @@ from datetime import timedelta
 import re
 from argparse import ArgumentParser
 import tkinter as tk
-from tkinter import simpledialog, messagebox
+from tkinter import simpledialog, messagebox, filedialog
 
 class Gui:
     def __init__(self, master):
@@ -34,53 +34,57 @@ class Gui:
         master.title("Overlog")
         master.geometry("2000x1000")
 
-        # Menu
+        # Menu (Dynamic?)
         self.menu = tk.Menu(master)
         self.menu.combat = tk.Menu(self.menu, tearoff=0)
-        self.menu.combat.add_command(label="Damage", command= lambda :self.combat_type("Damage"))
-        self.menu.combat.add_command(label="Heal", command= lambda :self.combat_type("Heal"))
-        self.menu.combat.add_command(label="Tank", command= lambda :self.combat_type("Tank"))
+        self.menu.combat.add_command(label="Button", command= lambda :self.combat_type("Test"))
 
-        self.menu.settings = tk.Menu(self.menu, tearoff=0)
-        self.menu.settings.add_command(label="Logfile", command= lambda :self.settings_logfile(simpledialog.askstring("Logfile", "Input log file location")))
-        self.menu.settings.add_command(label="Refresh rate", command= lambda :self.settings["refresh"].set(simpledialog.askinteger("Refresh rate", "Input refresh rate between 1 and 60 seconds", minvalue=1, maxvalue=60)))
-        self.menu.settings.add_separator()
-        self.menu.settings.add_checkbutton(label="Follow", variable=self.settings["follow"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Dmgs", variable=self.settings["Dmgs"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Dmgs crits", variable=self.settings["Dmgs crits"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Dmgs recieved", variable=self.settings["Dmgs recieved"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Heals", variable=self.settings["Heals"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Heals crits", variable=self.settings["Heals crits"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Heals recieved", variable=self.settings["Heals recieved"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Misc info", variable=self.settings["Misc info"], onvalue=True, offvalue=False)
-        self.menu.settings.add_checkbutton(label="Loot", variable=self.settings["Loot"], onvalue=True, offvalue=False)
-        self.menu.settings.add_separator()
-        self.menu.settings.add_command(label="Version", command=False)
+        self.menu.file = tk.Menu(self.menu, tearoff=0)
+        self.menu.file.add_command(label="Open Logfile...", command= lambda :self.settings_logfile(filedialog.askopenfilename(initialdir = self.user_path+"\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\", title="Select .log file", filetypes=(("Log files", "*.log"),("All files", "*.*")))))
+        self.menu.file.add_separator()
+        self.menu.file.add_checkbutton(label="Refresh", variable=self.settings["follow"], onvalue=True, offvalue=False)
+        self.menu.file.add_command(label="Refresh rate...", command= lambda :self.settings["refresh"].set(simpledialog.askinteger("Refresh rate", "Input refresh rate between 1 and 60 seconds (standard is 30)", minvalue=1, maxvalue=60)))
 
-        self.menu.add_cascade(label="Combat type", menu=self.menu.combat)
-        self.menu.add_cascade(label="Settings", menu=self.menu.settings)
+        self.menu.show = tk.Menu(self.menu)
+        self.menu.show.add_checkbutton(label="Dmgs", variable=self.settings["Dmgs"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Dmgs crits", variable=self.settings["Dmgs crits"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Dmgs recieved", variable=self.settings["Dmgs recieved"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Heals", variable=self.settings["Heals"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Heals crits", variable=self.settings["Heals crits"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Heals recieved", variable=self.settings["Heals recieved"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Misc info", variable=self.settings["Misc info"], onvalue=True, offvalue=False)
+        self.menu.show.add_checkbutton(label="Loot", variable=self.settings["Loot"], onvalue=True, offvalue=False)
+
+        self.menu.add_cascade(label="Code activation", menu=self.menu.combat)
+        self.menu.add_cascade(label="File", menu=self.menu.file)
+        self.menu.add_cascade(label="Show", menu=self.menu.show)
         master.config(menu=self.menu)
 
         # Work space
         self.mainframe = tk.Frame(master, bg="green")
         self.mainframe.pack(expand=True, fill=tk.BOTH)
 
+        self.mainframe.update()
+        self.mainframe.monster = tk.Frame(self.mainframe, bg="blue", width=self.mainframe.winfo_width()/6)
+        self.mainframe.monster.pack(side=tk.LEFT, fill=tk.Y)
+
+        self.mainframe.player = tk.Frame(self.mainframe, bg="red", height=self.mainframe.winfo_height()/24)
+        self.mainframe.player.pack(side=tk.TOP, fill=tk.X)
+
+        self.mainframe.stats = tk.Frame(self.mainframe, bg = "purple")
+        self.mainframe.stats.pack(expand=True, fill=tk.BOTH)
+
         # Status bar
-        self.statusbar = tk.Label(master, relief=tk.SUNKEN, anchor=tk.W, bd=1)
+        self.statusbar = tk.Label(master, text="File: "+self.settings["logfile"].get(), relief=tk.SUNKEN, anchor=tk.W, bd=1)
         self.statusbar.pack(fill=tk.X)
 
     def settings_logfile(self, response):
         '''self.settings["logfile"].set(response), if response[-4:] == ".log" exists as a file'''
         if response != None and path.exists(response) and response[-4:] == ".log":
             self.settings["logfile"].set(response)
-        elif response == None:
-            return
-        else:
-            if messagebox.askretrycancel("Error", "This is not a .log file \nExample: C:\\Users\\Username\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\combat.log"):
-                self.settings_logfile(simpledialog.askstring("logfile", "input log file location"))
 
     def combat_type(self, type):
-        print(self.settings["logfile"].get())
+        print("test")
 
 
 def log_parsing(args):
