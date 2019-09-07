@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK, system, getenv, get_terminal_size, name as nme
+from os import access, R_OK, system, getenv, name as nme
 from time import sleep
 from datetime import timedelta
 import re
