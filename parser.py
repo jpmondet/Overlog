@@ -1,19 +1,40 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK, system, getenv, get_terminal_size, name as nme
+from os import access, R_OK, system, getenv, get_terminal_size, path, name as nme
 from time import sleep
 from datetime import timedelta
 import re
 from argparse import ArgumentParser
 import tkinter as tk
+from tkinter import simpledialog, messagebox
 
 class Gui:
     def __init__(self, master):
+        if (nme == 'nt'):
+            self.user_path = getenv("USERPROFILE")
+        else:
+            self.user_path = ""
+
+        self.settings = {
+            "logfile":tk.StringVar(value=self.user_path+"\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\combat.log"),
+            "refresh":tk.IntVar(value=30),
+            "follow":tk.BooleanVar(),
+            "Dmgs":tk.BooleanVar(),
+            "Dmgs crits":tk.BooleanVar(),
+            "Dmgs recieved":tk.BooleanVar(),
+            "Heals":tk.BooleanVar(),
+            "Heals crits":tk.BooleanVar(),
+            "Heals recieved":tk.BooleanVar(),
+            "Misc info":tk.BooleanVar(),
+            "Loot":tk.BooleanVar()
+        }
+
         self.master = master
         master.title("Overlog")
+        master.geometry("2000x1000")
 
-        #Menu
+        # Menu
         self.menu = tk.Menu(master)
         self.menu.combat = tk.Menu(self.menu, tearoff=0)
         self.menu.combat.add_command(label="Damage", command= lambda :self.combat_type("Damage"))
@@ -21,29 +42,45 @@ class Gui:
         self.menu.combat.add_command(label="Tank", command= lambda :self.combat_type("Tank"))
 
         self.menu.settings = tk.Menu(self.menu, tearoff=0)
-        self.menu.settings.add_command(label="Logfile", command=False)
-        self.menu.settings.add_command(label="Follow", command=False)
-        self.menu.settings.add_command(label="Refresh", command=False)
-        self.menu.settings.add_command(label="Dmgs", command=False)
-        self.menu.settings.add_command(label="Dmgs crits", command=False)
-        self.menu.settings.add_command(label="Dmgs recieved", command=False)
-        self.menu.settings.add_command(label="Heals recieved", command=False)
-        self.menu.settings.add_command(label="Heals", command=False)
-        self.menu.settings.add_command(label="Heals crits", command=False)
-        self.menu.settings.add_command(label="Misc info", command=False)
-        self.menu.settings.add_command(label="Loot", command=False)
+        self.menu.settings.add_command(label="Logfile", command= lambda :self.settings_logfile(simpledialog.askstring("Logfile", "Input log file location")))
+        self.menu.settings.add_command(label="Refresh rate", command= lambda :self.settings["refresh"].set(simpledialog.askinteger("Refresh rate", "Input refresh rate between 1 and 60 seconds", minvalue=1, maxvalue=60)))
+        self.menu.settings.add_separator()
+        self.menu.settings.add_checkbutton(label="Follow", variable=self.settings["follow"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Dmgs", variable=self.settings["Dmgs"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Dmgs crits", variable=self.settings["Dmgs crits"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Dmgs recieved", variable=self.settings["Dmgs recieved"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Heals", variable=self.settings["Heals"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Heals crits", variable=self.settings["Heals crits"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Heals recieved", variable=self.settings["Heals recieved"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Misc info", variable=self.settings["Misc info"], onvalue=True, offvalue=False)
+        self.menu.settings.add_checkbutton(label="Loot", variable=self.settings["Loot"], onvalue=True, offvalue=False)
+        self.menu.settings.add_separator()
         self.menu.settings.add_command(label="Version", command=False)
 
         self.menu.add_cascade(label="Combat type", menu=self.menu.combat)
         self.menu.add_cascade(label="Settings", menu=self.menu.settings)
         master.config(menu=self.menu)
 
-        #Front
-        self.mainframe = tk.Frame(master, bg="red", height=1000, width=2000)
-        self.mainframe.pack()
+        # Work space
+        self.mainframe = tk.Frame(master, bg="green")
+        self.mainframe.pack(expand=True, fill=tk.BOTH)
+
+        # Status bar
+        self.statusbar = tk.Label(master, relief=tk.SUNKEN, anchor=tk.W, bd=1)
+        self.statusbar.pack(fill=tk.X)
+
+    def settings_logfile(self, response):
+        '''self.settings["logfile"].set(response), if response[-4:] == ".log" exists as a file'''
+        if response != None and path.exists(response) and response[-4:] == ".log":
+            self.settings["logfile"].set(response)
+        elif response == None:
+            return
+        else:
+            if messagebox.askretrycancel("Error", "This is not a .log file \nExample: C:\\Users\\Username\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\combat.log"):
+                self.settings_logfile(simpledialog.askstring("logfile", "input log file location"))
 
     def combat_type(self, type):
-        print(type)
+        print(self.settings["logfile"].get())
 
 
 def log_parsing(args):
@@ -307,5 +344,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     gui = Gui(root)
     root.mainloop()
-
     # main()
