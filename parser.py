@@ -1,90 +1,168 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK, system, getenv, get_terminal_size, path, name as nme
+from os import access, R_OK, system, getenv, get_terminal_size, path, SEEK_END, name as nme
 from time import sleep
 from datetime import timedelta
 import re
 from argparse import ArgumentParser
 import tkinter as tk
-from tkinter import simpledialog, messagebox, filedialog
+from tkinter import simpledialog, messagebox, filedialog, ttk
+from collections import namedtuple
 
 class Gui:
     def __init__(self, master):
-        if (nme == 'nt'):
-            self.user_path = getenv("USERPROFILE")
-        else:
-            self.user_path = ""
-
+        self.window = {
+            "name":"Overlog",
+            "size":"2000x1000"
+            }
         self.settings = {
-            "logfile":tk.StringVar(value=self.user_path+"\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\combat.log"),
+            "logfile":tk.StringVar(value=user_path+"\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\combat.log"),
             "refresh":tk.IntVar(value=30),
             "follow":tk.BooleanVar(),
-            "Dmgs":tk.BooleanVar(),
-            "Dmgs crits":tk.BooleanVar(),
-            "Dmgs recieved":tk.BooleanVar(),
-            "Heals":tk.BooleanVar(),
-            "Heals crits":tk.BooleanVar(),
-            "Heals recieved":tk.BooleanVar(),
-            "Misc info":tk.BooleanVar(),
-            "Loot":tk.BooleanVar()
+            "dmgs":tk.BooleanVar(),
+            "dmgs_crits":tk.BooleanVar(),
+            "dmgs_recieved":tk.BooleanVar(),
+            "heals":tk.BooleanVar(),
+            "heals_crits":tk.BooleanVar(),
+            "heals_recieved":tk.BooleanVar(),
+            "misc_info":tk.BooleanVar(),
+            "loot":tk.BooleanVar()
         }
+        self.parse = Parser()
+
+
 
         self.master = master
-        master.title("Overlog")
-        master.geometry("2000x1000")
+        master.title(self.window["name"])
+        master.geometry(self.window["size"])
 
         # Menu (Dynamic?)
-        self.menu = tk.Menu(master)
-        self.menu.combat = tk.Menu(self.menu, tearoff=0)
-        self.menu.combat.add_command(label="Button", command= lambda :self.combat_type("Test"))
+        self.menu_parse = tk.Menu(master)
+        self.menu_parse.combat = tk.Menu(self.menu_parse, tearoff=0)
+        self.menu_parse.combat.add_command(label="Button", command= lambda :self.code_test("Test"))
 
-        self.menu.file = tk.Menu(self.menu, tearoff=0)
-        self.menu.file.add_command(label="Open Logfile...", command= lambda :self.settings_logfile(filedialog.askopenfilename(initialdir = self.user_path+"\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\", title="Select .log file", filetypes=(("Log files", "*.log"),("All files", "*.*")))))
-        self.menu.file.add_separator()
-        self.menu.file.add_checkbutton(label="Refresh", variable=self.settings["follow"], onvalue=True, offvalue=False)
-        self.menu.file.add_command(label="Refresh rate...", command= lambda :self.settings["refresh"].set(simpledialog.askinteger("Refresh rate", "Input refresh rate between 1 and 60 seconds (standard is 30)", minvalue=1, maxvalue=60)))
+        self.menu_parse.file = tk.Menu(self.menu_parse, tearoff=0)
+        self.menu_parse.file.add_command(label="Open Logfile...", command= lambda :self.settings_logfile(filedialog.askopenfilename(initialdir = user_path+"\\AppData\\LocalLow\\Orbus Online, LLC\\OrbusVR\\", title="Select .log file", filetypes=(("Log files", "*.log"),("All files", "*.*")))))
+        self.menu_parse.file.add_separator()
+        self.menu_parse.file.add_checkbutton(label="Refresh", variable=self.settings["follow"], onvalue=True, offvalue=False)
+        self.menu_parse.file.add_command(label="Refresh rate...", command=lambda :self.settings["refresh"].set(simpledialog.askinteger("Refresh rate", "Input refresh rate between 1 and 60 seconds (standard is 30)", minvalue=1, maxvalue=60)))
 
-        self.menu.show = tk.Menu(self.menu)
-        self.menu.show.add_checkbutton(label="Dmgs", variable=self.settings["Dmgs"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Dmgs crits", variable=self.settings["Dmgs crits"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Dmgs recieved", variable=self.settings["Dmgs recieved"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Heals", variable=self.settings["Heals"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Heals crits", variable=self.settings["Heals crits"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Heals recieved", variable=self.settings["Heals recieved"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Misc info", variable=self.settings["Misc info"], onvalue=True, offvalue=False)
-        self.menu.show.add_checkbutton(label="Loot", variable=self.settings["Loot"], onvalue=True, offvalue=False)
+        self.menu_parse.show = tk.Menu(self.menu_parse)
+        self.menu_parse.show.add_checkbutton(label="Dmgs", variable=self.settings["dmgs"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Dmgs crits", variable=self.settings["dmgs_crits"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Dmgs recieved", variable=self.settings["dmgs_recieved"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Heals", variable=self.settings["heals"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Heals crits", variable=self.settings["heals_crits"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Heals recieved", variable=self.settings["heals_recieved"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Misc info", variable=self.settings["misc_info"], onvalue=True, offvalue=False)
+        self.menu_parse.show.add_checkbutton(label="Loot", variable=self.settings["loot"], onvalue=True, offvalue=False)
 
-        self.menu.add_cascade(label="Code activation", menu=self.menu.combat)
-        self.menu.add_cascade(label="File", menu=self.menu.file)
-        self.menu.add_cascade(label="Show", menu=self.menu.show)
-        master.config(menu=self.menu)
+        self.menu_parse.add_cascade(label="Code activation", menu=self.menu_parse.combat)
+        self.menu_parse.add_cascade(label="File", menu=self.menu_parse.file)
+        self.menu_parse.add_cascade(label="Show", menu=self.menu_parse.show)
+        master.config(menu=self.menu_parse)
 
         # Work space
         self.mainframe = tk.Frame(master, bg="green")
         self.mainframe.pack(expand=True, fill=tk.BOTH)
 
-        self.mainframe.update()
-        self.mainframe.monster = tk.Frame(self.mainframe, bg="blue", width=self.mainframe.winfo_width()/6)
-        self.mainframe.monster.pack(side=tk.LEFT, fill=tk.Y)
+            # Fight_select Frame
+        self.mainframe.fight_select = tk.Frame(self.mainframe, bg="blue")
+        self.mainframe.fight_select.pack(side=tk.LEFT, fill=tk.Y)
 
-        self.mainframe.player = tk.Frame(self.mainframe, bg="red", height=self.mainframe.winfo_height()/24)
-        self.mainframe.player.pack(side=tk.TOP, fill=tk.X)
+        self.mainframe.fight_select.dungeon_menu = tk.Menubutton(self.mainframe.fight_select, text="Select dungeon run", relief=tk.RAISED, bd=2)
+        self.mainframe.fight_select.dungeon_menu.pack(side=tk.TOP, fill=tk.X)
 
-        self.mainframe.stats = tk.Frame(self.mainframe, bg = "purple")
-        self.mainframe.stats.pack(expand=True, fill=tk.BOTH)
+        self.mainframe.fight_select.monster_list = tk.Listbox(self.mainframe.fight_select)
+        self.mainframe.fight_select.monster_list.pack(expand=True, fill=tk.BOTH)
+
+            # Player_select Frame
+        self.mainframe.player_select = tk.Frame(self.mainframe, bg="red", height=25)
+        self.mainframe.player_select.pack(side=tk.TOP, fill=tk.X)
+
+            # Stats_view Frame
+        self.mainframe.stats_view = tk.Frame(self.mainframe, bg = "purple")
+        self.mainframe.stats_view.pack(expand=True, fill=tk.BOTH)
 
         # Status bar
         self.statusbar = tk.Label(master, text="File: "+self.settings["logfile"].get(), relief=tk.SUNKEN, anchor=tk.W, bd=1)
         self.statusbar.pack(fill=tk.X)
 
+
+    def code_test(self, type):
+        self.parse(self.settings["logfile"].get())
+
     def settings_logfile(self, response):
         '''self.settings["logfile"].set(response), if response[-4:] == ".log" exists as a file'''
         if response != None and path.exists(response) and response[-4:] == ".log":
             self.settings["logfile"].set(response)
+            self.statusbar["text"] = "File: "+self.settings["logfile"].get()
 
-    def combat_type(self, type):
-        print("test")
+    def convert_dictToObj(self, args):
+        '''args["key"] = tkVar to args.key = var'''
+        args_named = {}
+        for key in args:
+            args_named[key] = args[key].get()
+
+        args_named = namedtuple("args", args_named.keys())(*args_named.values())
+        return(args_named)
+
+class Parser:
+    def __init__(self):
+        self.pattern = {
+            "combat_pattern" : re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] (?P<dude_hurt>[\S\s]+) took (?P<damages>\S+) damage from (?P<damage_dealer>[\S ]+)\s+'),
+            "xp_pattern" : re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Loot] Gained (?P<pts>\S+) XP?'),
+            "dram_pattern" : re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Loot] Gained (?P<pts>\S+) Dram?'),
+            "rep_pattern" : re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Loot] Earned (?P<pts>\S+) Reputation?'),
+            "loot_pattern" : re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Loot] Item Acquired: (?P<loot>.*)'),
+            "enter_combat_pattern" : re.compile('(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2}):(?P<milsec>\d{3}) \[Combat] You are now in combat.'),
+            "exit_combat_pattern" : re.compile('(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2}):(?P<milsec>\d{3}) \[Combat] You are no longer in combat')
+        }
+        self.pattern_master = re.compile("(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[(?P<type>Loot|Combat|System)]( Gained (?P<xp>\S+) XP?| Item Acquired: (?P<loot>.*)| Gained (?P<dram>\S+) Dram?| Earned (?P<reputation>\S+) Reputation?| (?P<dude_hurt>.+) took (?P<damages>\S+) damage from (?P<damage_dealer>[\S]+)(?:(?=.) (?P<crit>\(Critical\))|))")
+    def __call__(self, logfile):
+        for line in self.readlines_reverse(logfile):
+            re_line = re.match(self.pattern_master, line)
+            if re_line:
+                if re_line.group("type") == "Loot":
+                    self.loot(re_line)
+                elif re_line.group("type") == "Combat":
+                    self.combat(re_line)
+                elif re_line.group("type") == "System":
+                    self.system(re_line)
+                else:
+                    print("Error group does not exist: " + re_line.group("type"))
+                    system("pause")
+
+    def loot(self, line):
+        '''Does something if [Loot]'''
+        print(line.group("time") + " - Looting")
+
+    def combat(self, line):
+        '''Does something if [Combat]'''
+        print(line.group("time") + " - Fighting")
+
+    def system(self, line):
+        '''Does something if [System]'''
+        print(line.group("time") + " - System Notice")
+
+
+    def readlines_reverse(self, filename):
+        '''Reverse read file (note; not self written)'''
+        with open(filename) as qfile:
+            qfile.seek(0, SEEK_END)
+            position = qfile.tell()
+            line = ''
+            while position >= 0:
+                qfile.seek(position)
+                next_char = qfile.read(1)
+                if next_char == "\n":
+                    yield line[::-1]
+                    line = ''
+                else:
+                    line += next_char
+                position -= 1
+            yield line[::-1]
 
 
 def log_parsing(args):
@@ -345,6 +423,11 @@ def main():
 
 
 if __name__ == "__main__":
+    if (nme == 'nt'):
+        user_path = getenv("USERPROFILE")
+    else:
+        user_path = ""
+
     root = tk.Tk()
     gui = Gui(root)
     root.mainloop()
