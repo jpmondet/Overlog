@@ -7,7 +7,7 @@ from datetime import timedelta
 import re
 from argparse import ArgumentParser
 
-def log_parsing(args):
+def log_parsing(logfile):
     if nme == 'nt':
         system('mode con: lines=800')
     combat_pattern = re.compile('(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] (?P<dude_hurt>[\S\s]+) took (?P<damages>\S+) damage from (?P<damage_dealer>[\S ]+)\s+')
@@ -33,7 +33,7 @@ def log_parsing(args):
     exited_time = timedelta()
     entered_combat = False
     exited_combat = False
-    with open(args.logfile, "r") as clog:
+    with open(logfile, "r") as clog:
         for line in clog:
             critical = False
             combat_log_split = re.match(combat_pattern, line)
@@ -143,8 +143,6 @@ def log_parsing(args):
                 tot_dungeons = tot_dungeons + 1
                 continue
 
-
-
     sorted_fighters = sorted(fighters.items(), key=lambda kv: kv[1][0], reverse=True)
     sorted_fighters_crits = sorted(fighters_criticals.items(), key=lambda kv: kv[1][0], reverse=True)
     sorted_takers = sorted(damages_taken.items(), key=lambda kv: kv[1][0], reverse=True)
@@ -152,6 +150,25 @@ def log_parsing(args):
     sorted_healers_crits = sorted(heals_given_crits.items(), key=lambda kv: kv[1][0], reverse=True)
     sorted_healed = sorted(heals_received.items(), key=lambda kv: kv[1][0], reverse=True)
 
+    stats_dict = {
+        "dmgs": sorted_fighters,
+        "crit_dmgs": sorted_fighters_crits,
+        "rcv_dmgs": sorted_takers,
+        "heals": sorted_healers,
+        "crit_heals": sorted_healers_crits,
+        "rcv_heals": sorted_healed,
+        "tot_dung": tot_dungeons,
+        "combat_t": tot_combat_time,
+        "dram": tot_dram,
+        "rep": tot_rep,
+        "xp": tot_xp,
+        "loots": loots,
+    }
+
+    return stats_dict
+
+
+def console_display(args, stats_dict):
     all_stats = True
     if (args.dmgs or 
         args.dmgs_crits or 
@@ -165,47 +182,48 @@ def log_parsing(args):
 
     if args.dmgs or all_stats:
         print("\nOverall damages (crits included) dealt (ordered from most to least):")
-        for guy, dmgs in sorted_fighters:
+        for guy, dmgs in stats_dict["dmgs"]:
             print("    {0:15} {1:10} ({2:6} hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.dmgs_crits or all_stats:
         print("\nOverall critical dmgs dealt (ordered from most to least):")
-        for guy, dmgs in sorted_fighters_crits:
+        for guy, dmgs in stats_dict["crit_dmgs"]:
             print("    {0:15} {1:10} ({2:6} crit hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.dmgs_received or all_stats:
         print("\nOverall damages Received (ordered from most to least):")
-        for guy, dmgs in sorted_takers:
+        for guy, dmgs in stats_dict["rcv_dmgs"]:
             print("    {0:15} {1:10} ({2:6} hits (or ticks from DoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.heals_received or all_stats:
         print("\nOverall heals received (ordered from most to least):")
-        for guy, dmgs in sorted_healed:
+        for guy, dmgs in stats_dict["rcv_heals"]:
             print("    {0:15} {1:10} ({2:6} heals (or ticks from HoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.heals or all_stats:
         print("\nOverall heals (crits included) given (ordered from most to least):")
-        for guy, dmgs in sorted_healers:
+        for guy, dmgs in stats_dict["heals"]:
             print("    {0:15} {1:10} ({2:6} heals (or ticks from HoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.heals_crits or all_stats:
         print("\nOverall critical heals given (ordered from most to least):")
-        for guy, dmgs in sorted_healers_crits:
+        for guy, dmgs in stats_dict["crit_heals"]:
             print("    {0:15} {1:10} ({2:6} crit heals (or ticks from HoT))".format(guy,dmgs[0],dmgs[1]))
 
     if args.loots:
-        if loots:
+        if stats_dict["loots"]:
             print("\n\nWow, what a lucky person you are, you've acquired : ")
-            for loot in loots:
+            for loot in stats_dict["loots"]:
                 print("    - {}".format(loot))
         else:
             print("Oh, no loots during this session :-(")
 
     if args.misc_infos:
-        print("\n\nYou won {} XP, {} Dram and {} Reputation on this session! :-)".format(tot_xp, tot_dram, tot_rep))
-        if tot_dungeons > 0:
-            print("You even completed {} dungeons ! Amazing !".format(tot_dungeons))
-        print("And btw, you were in combat for {} hour(s)".format(tot_combat_time))
+        print("\n\nYou won {} XP, {} Dram and {} Reputation on this session! :-)".format( 
+            stats_dict["xp"], stats_dict["dram"], stats_dict["rep"]))
+        if stats_dict["tot_dung"] > 0:
+            print("You even completed {} dungeons ! Amazing !".format(stats_dict["tot_dung"]))
+        print("And btw, you were in combat for {} hour(s)".format(stats_dict["combat_t"]))
 
 
 def main():
@@ -238,10 +256,12 @@ def main():
         print("Ok, going loopy (keeps looking the file & refreshing the stats accordingly)")
         while True:
             system('cls' if nme == 'nt' else 'clear')
-            log_parsing(args)
+            stats_dict = log_parsing(args.logfile)
+            console_display(args, stats_dict)
             sleep(args.refresh)
     else:
-        log_parsing(args)
+        stats_dict = log_parsing(args.logfile)
+        console_display(args, stats_dict)
 
     if nme == 'nt':
         system('pause')
