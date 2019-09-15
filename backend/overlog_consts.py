@@ -22,15 +22,19 @@ REP_PATTERN = re.compile(
 LOOT_PATTERN = re.compile(
     "(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Loot] Item Acquired: (?P<loot>.*)"
 )
-ENTER_COMBAT_PATTERN = re.compile(
-    "(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2}):(?P<milsec>\d{3}) \[Combat] You are now in combat."
-)
-EXIT_COMBAT_PATTERN = re.compile(
-    "(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2}):(?P<milsec>\d{3}) \[Combat] You are no longer in combat."
-)
 ENTER_COMBAT_PATTERN_TIME = re.compile(
     "(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] You are now in combat."
 )
 EXIT_COMBAT_PATTERN_TIME = re.compile(
     "(?P<time>\d{2}:\d{2}:\d{2}:\d{3}) \[Combat] You are no longer in combat."
 )
+
+DUNGEON1 = "Crypt"
+DUNGEON2 = "Sewers"
+DUNGEON3 = "Airship"
+DUNGEON4 = "BrokenHall"
+RAIDBOSS1 = "Clock"
+RAIDBOSS2 = "Pot Tank"
+RAIDBOSS3 = "Broken Knight"
+RAIDBOSS4 = "Mistress"
+RAIDBOSS5 = "Valusia"
