@@ -4,11 +4,13 @@
 #! /usr/bin/env python3
 
 from datetime import timedelta
+from time import sleep
 
 # pylint: disable=wildcard-import,unused-wildcard-import
 from backend.overlog_consts import *
 
 # pylint: disable=bad-continuation
+
 
 def get_struct_combat_line(combat_log_matched):
     """
@@ -45,20 +47,6 @@ def get_struct_combat_line(combat_log_matched):
         splitted_name = struct_log["damage_dealer"].split("(")
         struct_log["id_ddealer"] = (int)("".join(splitted_name[-1])[:-1])
         struct_log["damage_dealer"] = "".join(splitted_name[0])
-        # if "(" in struct_log["damage_taker"]:
-        # A mob can't hit another mob so this is certainly a bugged line where
-        # the player is only identified by an id but no name...
-        # This is often the case when the hit killed the player (however we can't
-        # identify the player with this id since it's randomized and the mapping
-        # player <-> id is never shown elsewhere...
-        #
-        #
-        # This also take care of some other weird cases where an object hit a mob
-        # (like lever in sewers) but we don't care about it anyways so we ignore
-        # the line.
-
-        # return None
-        # EDIT: A 'various' key will be use to store those weird things.
 
     if "(" in struct_log["damage_taker"]:
         # Players are not allowed to have parenthesis in their name
@@ -144,7 +132,7 @@ def get_parsed_line(line):
     return None, None
 
 
-# TODO: Maybe merge the very similar update functions
+# TODO: Maybe merge those very similar update functions
 def update_stats_superdict_for_rcv_dmgs(infos, super_dict):
     """
         Updating the super_dict with dmgs received by players
@@ -265,7 +253,9 @@ def update_stats_superdict_for_heal(infos, super_dict):
     return super_dict
 
 
-def update_misc_details_superdict_with_combat(target, id_ddealer, name_ddealer, dmgs_tuple, super_dict):
+def update_misc_details_superdict_with_combat(
+    target, id_ddealer, name_ddealer, dmgs_tuple, super_dict
+):
     """
         Quick func that updates misc details on a target and return the dict updated
     """
@@ -410,7 +400,7 @@ def update_overall_stats_superdict_with_combat(infos, super_dict):
     return super_dict
 
 
-def build_stats_superdict(line, super_dict):
+def build_stats_superdict(line, super_dict=None):
     """
         This is the core "logic" of this script
 
@@ -479,6 +469,37 @@ def build_stats_superdict(line, super_dict):
             "overall_combat_time": timedelta(0),
         }
     """
+    if not super_dict:
+        # If the super_dict wasn't passed in param, we initialize it
+
+        # Note that a player may start killing mobs outside of a dungeon which
+        # can completed mess up the stats if the player does into a dungeon right after that
+        # (we can only know that
+        # a player finished a dungeon... If the player killed mobs before or between
+        # dungeons, we are doomed)
+        # TODO: Maybe split up this dict or use another data structure
+        # to avoid an explosion ^^
+        # (tried with a 200k logfile -> the dict ended up taking 36 MB X_X)
+        super_dict = {
+            "current_combats": dict(),
+            "dung_nbr": 0,
+            "xp": 0,
+            "rep": 0,
+            "dram": 0,
+            "loots": [],
+            "current_combat_time": timedelta(0),
+            "overall_combat_time": timedelta(0),
+            "overall_combat_stats": {
+                "dmgs": dict(),
+                "crit_dmgs": dict(),
+                "heals": dict(),
+                "crit_heals": dict(),
+                "rcv_dmgs": dict(),
+                "rcv_heals": dict(),
+                "rcv_crit_dmgs": dict(),
+                "rcv_crit_heals": dict(),
+            },
+        }
 
     line_type, line_infos = get_parsed_line(line)
 
@@ -527,3 +548,45 @@ def build_stats_superdict(line, super_dict):
         return super_dict
 
     return super_dict
+
+
+def parse_file(logfile, super_dict=None):
+    """
+        Parse en entire file in one-shot.
+    """
+
+    with open(logfile, "r") as clog:
+        for line in clog:
+            super_dict = build_stats_superdict(line, super_dict)
+
+    return super_dict
+
+
+def watch_and_parse_file(
+    logfile, refresh=3, display_func=None, func_args=None, super_dict=None
+):
+    """
+        Watch continuously the logfile and get only new logs when they arrive
+        Optionnally, a func that can display super_dict can be passed in param
+        to be part of the loop (experimental).
+    """
+    log_f = open(logfile, "r+")
+    log_f.seek(0, 2)  # End of stream
+    prev_pos = log_f.tell()
+    new_pos = prev_pos
+    while True:
+        if new_pos > prev_pos:
+            log_f.seek(prev_pos)
+            new_line = "new_line"
+            while new_line:
+                new_line = log_f.readline()
+                super_dict = build_stats_superdict(new_line, super_dict)
+                if display_func:
+                    display_func(func_args, super_dict)
+            prev_pos = log_f.tell()
+        else:
+            log_f = open(logfile, "r+")
+            log_f.seek(0, 2)  # End of stream
+            new_pos = log_f.tell()
+            # log_f.seek(new_pos)
+            sleep(refresh)
