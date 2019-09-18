@@ -99,6 +99,7 @@ def main():
     """
         Parse the args passed by the user and implements the core logic of the script
     """
+    # TODO: Add tests
 
     if nme == "nt":
         USER_PATH = getenv("USERPROFILE")
