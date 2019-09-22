@@ -102,6 +102,78 @@ def test_get_parsed_line_dung():
 
     assert line_type == "dung"
 
+def test_get_parsed_line_combat_fail():
+    """
+        Checks if get_parsed_line func
+        matches on combat log
+    """
+    line_type, _ = get_parsed_line(XP_LOG_LINE)
+
+    assert line_type != "combat"
+
+def test_get_parsed_line_xp_fail():
+    """
+        Checks if get_parsed_line func
+        matches on xp log
+    """
+    line_type, _ = get_parsed_line(COMBAT_LOG_LINE)
+
+    assert line_type != "xp"
+
+def test_get_parsed_line_dram_fail():
+    """
+        Checks if get_parsed_line func
+        matches on dram log
+    """
+    line_type, _ = get_parsed_line(XP_LOG_LINE)
+
+    assert line_type != "dram"
+
+def test_get_parsed_line_rep_fail():
+    """
+        Checks if get_parsed_line func
+        matches on rep log
+    """
+    line_type, _ = get_parsed_line(COMBAT_LOG_LINE)
+
+    assert line_type != "rep"
+
+def test_get_parsed_line_loots_fail():
+    """
+        Checks if get_parsed_line func
+        matches on rep log
+    """
+    line_type, _ = get_parsed_line(XP_LOG_LINE)
+
+    assert line_type != "loots"
+
+def test_get_parsed_line_enter_cmbt_fail():
+    """
+        Checks if get_parsed_line func
+        matches on entered combat log
+    """
+    line_type, _ = get_parsed_line(EXIT_CMBT_LOG_LINE)
+
+    assert line_type != "entered_combat"
+
+def test_get_parsed_line_exit_cmbt_fail():
+    """
+        Checks if get_parsed_line func
+        matches on exited combat log
+    """
+    line_type, _ = get_parsed_line(ENTER_CMBT_LOG_LINE)
+
+    assert line_type != "exited_combat"
+
+def test_get_parsed_line_dung_fail():
+    """
+        Checks if get_parsed_line func
+        matches on Dungeon Completed log
+    """
+    line_type, _ = get_parsed_line(COMBAT_LOG_LINE)
+
+    assert line_type != "dung"
+
 def test_get_struct_combat_line():
     """
         Checks if a COMBAT log line is correctly
