@@ -9,7 +9,7 @@ from time import sleep
 # pylint: disable=wildcard-import,unused-wildcard-import
 from backend.overlog_consts import *
 
-# pylint: disable=bad-continuation
+# pylint: disable=bad-continuation, fixme
 
 
 def get_struct_combat_line(combat_log_matched):
@@ -37,7 +37,9 @@ def get_struct_combat_line(combat_log_matched):
         or "(Crushing)" in struct_log["damage_dealer"]
     ):
         struct_log["crit"] = True
-        struct_log["damage_dealer"] = "".join(struct_log["damage_dealer"].split()[:-1])
+        struct_log["damage_dealer"] = "".join(
+            struct_log["damage_dealer"].split()[:-1]
+        )
 
     if "(" in struct_log["damage_dealer"]:
         # Players are not allowed to have parenthesis in their name
@@ -86,7 +88,9 @@ def get_timedelta_from_matched(matched):
     sec = (int)(time_l[2])
     milsec = (int)(time_l[3])
 
-    return timedelta(hours=hour, minutes=minu, seconds=sec, milliseconds=milsec)
+    return timedelta(
+        hours=hour, minutes=minu, seconds=sec, milliseconds=milsec
+    )
 
 
 # pylint: disable=too-many-return-statements
@@ -120,7 +124,10 @@ def get_parsed_line(line):
 
     entered_log_matched = re.match(ENTER_COMBAT_PATTERN_TIME, line)
     if entered_log_matched:
-        return "entered_combat", get_timedelta_from_matched(entered_log_matched)
+        return (
+            "entered_combat",
+            get_timedelta_from_matched(entered_log_matched),
+        )
 
     exited_log_matched = re.match(EXIT_COMBAT_PATTERN_TIME, line)
     if exited_log_matched:
@@ -145,19 +152,18 @@ def update_stats_superdict_for_rcv_dmgs(infos, super_dict):
             "hits"
         ] += 1
     except KeyError:
-        super_dict["overall_combat_stats"]["rcv_dmgs"][infos["damage_taker"]] = {
-            "tot": infos["damages"],
-            "hits": 1,
-        }
+        super_dict["overall_combat_stats"]["rcv_dmgs"][
+            infos["damage_taker"]
+        ] = {"tot": infos["damages"], "hits": 1}
     if infos["crit"]:
         # We start by filling the healer's infos
         try:
-            super_dict["overall_combat_stats"]["rcv_crit_dmgs"][infos["damage_taker"]][
-                "tot"
-            ] += infos["damages"]
-            super_dict["overall_combat_stats"]["rcv_crit_dmgs"][infos["damage_taker"]][
-                "hits"
-            ] += 1
+            super_dict["overall_combat_stats"]["rcv_crit_dmgs"][
+                infos["damage_taker"]
+            ]["tot"] += infos["damages"]
+            super_dict["overall_combat_stats"]["rcv_crit_dmgs"][
+                infos["damage_taker"]
+            ]["hits"] += 1
         except KeyError:
             super_dict["overall_combat_stats"]["rcv_crit_dmgs"][
                 infos["damage_taker"]
@@ -173,7 +179,9 @@ def update_stats_superdict_for_dmgs(infos, super_dict):
         super_dict["overall_combat_stats"]["dmgs"][infos["damage_dealer"]][
             "tot"
         ] += infos["damages"]
-        super_dict["overall_combat_stats"]["dmgs"][infos["damage_dealer"]]["hits"] += 1
+        super_dict["overall_combat_stats"]["dmgs"][infos["damage_dealer"]][
+            "hits"
+        ] += 1
     except KeyError:
         super_dict["overall_combat_stats"]["dmgs"][infos["damage_dealer"]] = {
             "tot": infos["damages"],
@@ -182,17 +190,16 @@ def update_stats_superdict_for_dmgs(infos, super_dict):
     if infos["crit"]:
         # We start by filling the healer's infos
         try:
-            super_dict["overall_combat_stats"]["crit_dmgs"][infos["damage_dealer"]][
-                "tot"
-            ] += infos["damages"]
-            super_dict["overall_combat_stats"]["crit_dmgs"][infos["damage_dealer"]][
-                "hits"
-            ] += 1
+            super_dict["overall_combat_stats"]["crit_dmgs"][
+                infos["damage_dealer"]
+            ]["tot"] += infos["damages"]
+            super_dict["overall_combat_stats"]["crit_dmgs"][
+                infos["damage_dealer"]
+            ]["hits"] += 1
         except KeyError:
-            super_dict["overall_combat_stats"]["crit_dmgs"][infos["damage_dealer"]] = {
-                "tot": infos["damages"],
-                "hits": 1,
-            }
+            super_dict["overall_combat_stats"]["crit_dmgs"][
+                infos["damage_dealer"]
+            ] = {"tot": infos["damages"], "hits": 1}
     return super_dict
 
 
@@ -205,7 +212,9 @@ def update_stats_superdict_for_heal(infos, super_dict):
         super_dict["overall_combat_stats"]["heals"][infos["damage_dealer"]][
             "tot"
         ] += infos["damages"]
-        super_dict["overall_combat_stats"]["heals"][infos["damage_dealer"]]["hits"] += 1
+        super_dict["overall_combat_stats"]["heals"][infos["damage_dealer"]][
+            "hits"
+        ] += 1
     except KeyError:
         super_dict["overall_combat_stats"]["heals"][infos["damage_dealer"]] = {
             "tot": infos["damages"],
@@ -220,32 +229,30 @@ def update_stats_superdict_for_heal(infos, super_dict):
             "hits"
         ] += 1
     except KeyError:
-        super_dict["overall_combat_stats"]["rcv_heals"][infos["damage_taker"]] = {
-            "tot": infos["damages"],
-            "hits": 1,
-        }
+        super_dict["overall_combat_stats"]["rcv_heals"][
+            infos["damage_taker"]
+        ] = {"tot": infos["damages"], "hits": 1}
     if infos["crit"]:
         # We start by filling the healer's infos
         try:
-            super_dict["overall_combat_stats"]["crit_heals"][infos["damage_dealer"]][
-                "tot"
-            ] += infos["damages"]
-            super_dict["overall_combat_stats"]["crit_heals"][infos["damage_dealer"]][
-                "hits"
-            ] += 1
+            super_dict["overall_combat_stats"]["crit_heals"][
+                infos["damage_dealer"]
+            ]["tot"] += infos["damages"]
+            super_dict["overall_combat_stats"]["crit_heals"][
+                infos["damage_dealer"]
+            ]["hits"] += 1
         except KeyError:
-            super_dict["overall_combat_stats"]["crit_heals"][infos["damage_dealer"]] = {
-                "tot": infos["damages"],
-                "hits": 1,
-            }
+            super_dict["overall_combat_stats"]["crit_heals"][
+                infos["damage_dealer"]
+            ] = {"tot": infos["damages"], "hits": 1}
         # Then we fill the healed guy's infos
         try:
-            super_dict["overall_combat_stats"]["rcv_crit_heals"][infos["damage_taker"]][
-                "tot"
-            ] += infos["damages"]
-            super_dict["overall_combat_stats"]["rcv_crit_heals"][infos["damage_taker"]][
-                "hits"
-            ] += 1
+            super_dict["overall_combat_stats"]["rcv_crit_heals"][
+                infos["damage_taker"]
+            ]["tot"] += infos["damages"]
+            super_dict["overall_combat_stats"]["rcv_crit_heals"][
+                infos["damage_taker"]
+            ]["hits"] += 1
         except KeyError:
             super_dict["overall_combat_stats"]["rcv_crit_heals"][
                 infos["damage_taker"]
@@ -269,10 +276,12 @@ def update_misc_details_superdict_with_combat(
             "details": [dmgs_tuple],
         }
     else:
-        super_dict["current_combats"][target]["Misc"][id_ddealer]["tot_dmgs"] += dmgs
-        super_dict["current_combats"][target]["Misc"][id_ddealer]["details"].append(
-            dmgs_tuple
-        )
+        super_dict["current_combats"][target]["Misc"][id_ddealer][
+            "tot_dmgs"
+        ] += dmgs
+        super_dict["current_combats"][target]["Misc"][id_ddealer][
+            "details"
+        ].append(dmgs_tuple)
     return super_dict
 
 
@@ -313,9 +322,20 @@ def update_details_stats_superdict_with_combat(infos, super_dict):
             }
         }
     """
-    target = infos["damage_taker"] if not infos["id_dtaker"] else infos["id_dtaker"]
-    dealer = infos["damage_dealer"] if not infos["id_ddealer"] else infos["id_ddealer"]
-    dmgs_tuple = (infos["time"], infos["damages"], infos["crit"], infos["heal"])
+    target = (
+        infos["damage_taker"] if not infos["id_dtaker"] else infos["id_dtaker"]
+    )
+    dealer = (
+        infos["damage_dealer"]
+        if not infos["id_ddealer"]
+        else infos["id_ddealer"]
+    )
+    dmgs_tuple = (
+        infos["time"],
+        infos["damages"],
+        infos["crit"],
+        infos["heal"],
+    )
     if not super_dict["current_combats"].get(target):
         super_dict["current_combats"][target] = {
             "Name": infos["damage_taker"],
@@ -335,8 +355,12 @@ def update_details_stats_superdict_with_combat(infos, super_dict):
             return update_misc_details_superdict_with_combat(
                 target, dealer, infos["damage_dealer"], dmgs_tuple, super_dict
             )
-        super_dict["current_combats"][target][dealer]["tot_dmgs"] += infos["damages"]
-        super_dict["current_combats"][target][dealer]["details"].append(dmgs_tuple)
+        super_dict["current_combats"][target][dealer]["tot_dmgs"] += infos[
+            "damages"
+        ]
+        super_dict["current_combats"][target][dealer]["details"].append(
+            dmgs_tuple
+        )
 
     return super_dict
 
@@ -348,8 +372,7 @@ def update_overall_stats_superdict_with_combat(infos, super_dict):
 
         This one stores the infos for the overall combat stats
         in the actual super dict and return it
-    """
-    """
+
         Must leverage this :
 
         struct_log = {
@@ -364,9 +387,8 @@ def update_overall_stats_superdict_with_combat(infos, super_dict):
             "crit": False,
             "heal": False,
         }
-    """
-    # First we handle the easiest : Overall stats
-    """
+
+    First we handle the easiest : Overall stats
         "overall_combats_stats": {
             "dmgs": {
                 "player1": { tot: 121, hits: 3 },
@@ -508,8 +530,12 @@ def build_stats_superdict(line, super_dict=None):
         return super_dict
 
     if line_type == "combat":
-        super_dict = update_overall_stats_superdict_with_combat(line_infos, super_dict)
-        return update_details_stats_superdict_with_combat(line_infos, super_dict)
+        super_dict = update_overall_stats_superdict_with_combat(
+            line_infos, super_dict
+        )
+        return update_details_stats_superdict_with_combat(
+            line_infos, super_dict
+        )
 
     if line_type in ("xp", "dram", "rep"):
         super_dict[line_type] = super_dict[line_type] + line_infos
@@ -541,9 +567,9 @@ def build_stats_superdict(line, super_dict=None):
             # the player left a combat without starting it on the first place..
             # We ignore this combat to avoid weird calculations
             return super_dict
-        super_dict["overall_combat_time"] = super_dict["overall_combat_time"] + (
-            line_infos - super_dict["current_combat_time"]
-        )
+        super_dict["overall_combat_time"] = super_dict[
+            "overall_combat_time"
+        ] + (line_infos - super_dict["current_combat_time"])
         super_dict["current_combat_time"] = timedelta(0)
         return super_dict
 

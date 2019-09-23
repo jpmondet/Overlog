@@ -5,10 +5,8 @@
 #! /usr/bin/env python3
 
 import sys
-from os import access, R_OK, system, getenv, name as nme
+from os import access, R_OK, getenv, name as nme
 from argparse import ArgumentParser
-from datetime import timedelta
-from pprint import pprint
 
 from backend.parsing_functions import watch_and_parse_file, parse_file
 from frontend.console import console_display
@@ -22,6 +20,11 @@ def handle_arguments():
     """
         Simple func to export the code from main func (and make it clearer)
     """
+    global USER_PATH  # pylint: disable=global-statement
+
+    if nme == "nt":
+        USER_PATH = getenv("USERPROFILE")
+
     parser = ArgumentParser(
         prog="overlog.exe",
         description="Parse combat logs from OrbusVR and, by default, displays all the stats \
@@ -33,7 +36,8 @@ def handle_arguments():
         "--logfile",
         type=str,
         help="The log file to parse",
-        default=USER_PATH + "\AppData\LocalLow\Orbus Online, LLC\OrbusVR\combat.log",
+        default=USER_PATH
+        + "\AppData\LocalLow\Orbus Online, LLC\OrbusVR\combat.log",
     )
     parser.add_argument(
         "-f", "--follow", help="Keep watching the file", action="store_true"
@@ -67,7 +71,10 @@ def handle_arguments():
         action="store_true",
     )
     parser.add_argument(
-        "-hl", "--heals", help="Display the overall heals provided", action="store_true"
+        "-hl",
+        "--heals",
+        help="Display the overall heals provided",
+        action="store_true",
     )
     parser.add_argument(
         "-hlc",
@@ -83,15 +90,24 @@ def handle_arguments():
         action="store_true",
     )
     parser.add_argument(
-        "-lo", "--loots", help="Display all the loots acquired", action="store_true"
+        "-lo",
+        "--loots",
+        help="Display all the loots acquired",
+        action="store_true",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s v0.02")
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s v0.02"
+    )
     args = parser.parse_args()
 
     return args
 
 
 def get_arguments_as_dict(args):
+    """
+        Simply returns the args (which are wrapped in an Argparse
+        object) as a dict
+    """
     return args.__dict__
 
 
@@ -99,10 +115,6 @@ def main():
     """
         Parse the args passed by the user and implements the core logic of the script
     """
-    # TODO: Add tests
-
-    if nme == "nt":
-        USER_PATH = getenv("USERPROFILE")
 
     args = handle_arguments()
 
@@ -120,14 +132,9 @@ def main():
             "Ok, going loopy (keeps looking the file & refreshing the stats accordingly)"
         )
         # (If you need to get a dict from the args, just pass args.__dict__)
-        watch_and_parse_file(
-            args.logfile, args.refresh, console_display, args
-        )
+        watch_and_parse_file(args.logfile, args.refresh, console_display, args)
     else:
         console_display(args, parse_file(args.logfile))
-
-    if nme == "nt":
-        system("pause")
 
     return sys.exit(0)
 

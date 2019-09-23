@@ -4,7 +4,7 @@
 """
 #! /usr/bin/env python3
 
-# pylint: disable=bad-continuation
+# pylint: disable=bad-continuation, fixme
 
 from os import system, name as nme
 
@@ -13,7 +13,9 @@ def sort_and_dict_display(combat_dict, phrase, suffix_per_line):
     """
         Simple func that display a combat dict and the phrase passed in param
     """
-    sorted_dict = sorted(combat_dict.items(), key=lambda kv: kv[1]["tot"], reverse=True)
+    sorted_dict = sorted(
+        combat_dict.items(), key=lambda kv: kv[1]["tot"], reverse=True
+    )
     print()
     print(phrase)
     for guy, dmgs in sorted_dict:
@@ -36,7 +38,9 @@ def display_overall_stats(args, super_dict, all_stats):
 
     if args.dmgs or all_stats:
         phrase = "Overall damages (crits included) dealt (ordered from most to least):"
-        sort_and_dict_display(stats_dict["dmgs"], phrase, "hits (or ticks from DoT))")
+        sort_and_dict_display(
+            stats_dict["dmgs"], phrase, "hits (or ticks from DoT))"
+        )
 
     if args.dmgs_crits or all_stats:
         phrase = "Overall critical damages dealt (ordered from most to least):"
@@ -58,7 +62,9 @@ def display_overall_stats(args, super_dict, all_stats):
 
     if args.heals or all_stats:
         phrase = "Overall heals (crits included) given (ordered from most to least):"
-        sort_and_dict_display(stats_dict["heals"], phrase, "heals (or ticks from HoT))")
+        sort_and_dict_display(
+            stats_dict["heals"], phrase, "heals (or ticks from HoT))"
+        )
 
     if args.heals_crits or all_stats:
         phrase = "Overall critical heals given (ordered from most to least):"
@@ -86,7 +92,9 @@ def display_overall_stats(args, super_dict, all_stats):
                     super_dict["dung_nbr"]
                 )
             )
-        super_dict["overall_combat_time"] = str(super_dict["overall_combat_time"])
+        super_dict["overall_combat_time"] = str(
+            super_dict["overall_combat_time"]
+        )
         print(
             "And btw, you were in combat for {} hour(s)".format(
                 super_dict["overall_combat_time"]
@@ -108,8 +116,7 @@ def console_display(args, super_dict):
     """
         Takes all the args as dict and all the stats parsed
         and display them in the console.
-    """
-    """
+
     super_dict = {
         "current_combats": dict(),
         "dung_nbr": 0,
@@ -136,16 +143,18 @@ def console_display(args, super_dict):
         system("mode con: lines=800")
 
     all_stats = True
-    if (
-        args.dmgs
-        or args.dmgs_crits
-        or args.dmgs_received
-        or args.heals
-        or args.heals_crits
-        or args.heals_received
-        or args.misc_infos
-        or args.loots
-    ):
+    options = (
+        args.dmgs,
+        args.dmgs_crits,
+        args.dmgs_received,
+        args.heals,
+        args.heals_crits,
+        args.heals_received,
+        args.misc_infos,
+        args.loots,
+    )
+    if any(options):
         all_stats = False
 
     display_overall_stats(args, super_dict, all_stats)
+    input("\n\nPress any key to quit...")
