@@ -1,6 +1,8 @@
+![Tests/Linting](https://github.com/jpmondet/Overlog/workflows/Overlog_CI/badge.svg)
+
 # Overlog
 
-OrbusVR combat log parser
+OrbusVR combat log parser 
 
 ## Usage: 
 
