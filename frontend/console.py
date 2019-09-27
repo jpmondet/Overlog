@@ -102,14 +102,102 @@ def display_overall_stats(args, super_dict, all_stats):
         )
 
 
-def detailed_stats_display(args, super_dict):
+def sort_detailed_dpsers(target_details_dict):
+    """
+        Sort dpsers before displaying.
+
+        The specifity here is that the keys are not
+        consistent and must be checked (so it's a bit too
+        much convulated for a lambda)
+
+        As a first quick & dirty way, we can transform
+        the dict to a list of actual dpsers (without
+        misc things)
+
+        Then we sort
+    """
+    # Infos that are not used for now
+    not_used = ("Name", "Boss", "Misc")
+
+    dpsers_list = []
+
+    for dpser, hits in target_details_dict.items():
+        if dpser in not_used:
+            continue
+        # if dpser == "Name":
+        #     continue
+        # if dpser == "Boss":
+        #     continue
+        # if dpser == "Misc":
+        #     continue
+        # for misc_dpser, misc_hits in hits.items():
+        #     print(
+        #         "misc_thingy: {}, {}".format(
+        #             misc_hits["Name"], misc_hits["tot_dmgs"]
+        #         )
+        #     )
+        dpsers_list.append((dpser, hits["tot_dmgs"]))
+
+    sorted_dpsers = sorted(dpsers_list, key=lambda kv: kv[1], reverse=True)
+
+    return sorted_dpsers
+
+
+def detailed_stats_console_display(args, super_dict):
     """
         Function that displays the detailed combat
         stats to the console
+        The detailed struct looks like this :
+        run_name : {
+            Target : { # Target is the name of the player or the ID of the Monster
+                Name : "target_name" (if player, it's the same as Target),
+                Dealer1 : {"tot_dmgs", "details": [(dmg_tuple1), (dmg_tuple2)...]}
+                Dealer2 : {"tot_dmgs", "details": [(dmg_tuple1), (dmg_tuple2)...]}
+                Misc: {  # Those dmgs are done by objects or whatever weird thing
+                    MiscDealer1 : {"tot_dmgs", "details": [(dmg_tuple1), (dmg_tuple2)...]}
+                    MiscDealer2 : {"tot_dmgs", "details": [(dmg_tuple1), (dmg_tuple2)...]}
+                }
+            }
+        }
+
+        On a first version and to avoid pushing too much infos to the console,
+        we'll only display dmgs from players on bosses
     """
-    # TODO: Find a way to display this part of the
-    # dict on the console without being overwhelm.
-    return args, super_dict
+
+    # TODO : Use args to know what to display
+    # For now, it's only sorted dmgs on bosses
+    system("cls" if nme == "nt" else "clear")
+
+    for dung, details_dung in super_dict.items():
+        if not details_dung:
+            continue
+        if dung != "current_combats" and "Dungeon" not in dung:
+            continue
+        try:
+            if details_dung["dung_name"]:
+                dung_name = details_dung["dung_name"]
+        except KeyError:
+            continue
+        print()
+        print("#" * 30)
+        print("DETAILS FOR BOSSES IN {}".format(dung_name.upper()))
+        print("#" * 30)
+        for target, details_target in details_dung.items():
+            if target == "dung_name":
+                continue
+            if details_target["Boss"]:
+                name = (
+                    target
+                    if not details_target["Name"]
+                    else details_target["Name"]
+                )
+                print("\n{}".format(name.upper()))
+                print("-" * 20)
+                sorted_dict = sort_detailed_dpsers(details_target)
+
+                for dpser, hits in sorted_dict:
+                    print(dpser, hits)
+    return args
 
 
 def console_display(args, super_dict):
@@ -142,19 +230,24 @@ def console_display(args, super_dict):
     if nme == "nt":
         system("mode con: lines=800")
 
-    all_stats = True
-    options = (
-        args.dmgs,
-        args.dmgs_crits,
-        args.dmgs_received,
-        args.heals,
-        args.heals_crits,
-        args.heals_received,
-        args.misc_infos,
-        args.loots,
-    )
-    if any(options):
-        all_stats = False
+    if args.boss:
+        detailed_stats_console_display(args, super_dict)
+    else:
+        all_stats = True
+        options = (
+            args.dmgs,
+            args.dmgs_crits,
+            args.dmgs_received,
+            args.heals,
+            args.heals_crits,
+            args.heals_received,
+            args.misc_infos,
+            args.loots,
+        )
+        if any(options):
+            all_stats = False
 
-    display_overall_stats(args, super_dict, all_stats)
-    input("\n\nPress any key to quit...")
+        display_overall_stats(args, super_dict, all_stats)
+
+    if not args.follow:
+        input("\n\nPress ENTER key to quit...")

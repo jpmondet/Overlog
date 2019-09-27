@@ -96,6 +96,13 @@ def handle_arguments():
         action="store_true",
     )
     parser.add_argument(
+        "-b",
+        "--boss",
+        help="Display details on Bosses for the dungeons found in the log file\
+            /!\ Can only display top dmgs for now",
+        action="store_true",
+    )
+    parser.add_argument(
         "--version", action="version", version="%(prog)s v0.02"
     )
     args = parser.parse_args()
@@ -132,7 +139,11 @@ def main():
             "Ok, going loopy (keeps looking the file & refreshing the stats accordingly)"
         )
         # (If you need to get a dict from the args, just pass args.__dict__)
-        watch_and_parse_file(args.logfile, args.refresh, console_display, args)
+        super_dict = parse_file(args.logfile)
+        console_display(args, super_dict)
+        watch_and_parse_file(
+            args.logfile, args.refresh, console_display, args, super_dict
+        )
     else:
         console_display(args, parse_file(args.logfile))
 

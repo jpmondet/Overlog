@@ -43,6 +43,12 @@ BOSS2_DUNGEON3 = "Chaos Hunter"
 BOSS1_DUNGEON4 = "Minotaur"
 BOSS2_DUNGEON4 = "Gorgon"
 
+RAIDBOSS1 = "Clockwork Hunter"
+RAIDBOSS2 = "Pot Tank"
+RAIDBOSS3 = "Broken Knight"
+RAIDBOSS4 = "Seamstress"
+RAIDBOSS5 = "Empowered  Valusia Warrior"
+
 DUNGEON_BOSSES_DICT = {
     DUNGEON1: [BOSS1_DUNGEON1, BOSS2_DUNGEON1],
     DUNGEON2: [BOSS1_DUNGEON2, BOSS2_DUNGEON2],
@@ -59,6 +65,11 @@ BOSSES_DUNGEON_DICT = {
     BOSS2_DUNGEON2: DUNGEON2,
     BOSS2_DUNGEON3: DUNGEON3,
     BOSS2_DUNGEON4: DUNGEON4,
+    RAIDBOSS1: "Raid",
+    RAIDBOSS2: "Raid",
+    RAIDBOSS3: "Raid",
+    RAIDBOSS4: "Raid",
+    RAIDBOSS5: "Raid",
 }
 
 DUNGEON_BOSSES_TUPLE = (
@@ -70,10 +81,9 @@ DUNGEON_BOSSES_TUPLE = (
     BOSS2_DUNGEON3,
     BOSS1_DUNGEON4,
     BOSS2_DUNGEON4,
+    RAIDBOSS1,
+    RAIDBOSS2,
+    RAIDBOSS3,
+    RAIDBOSS4,
+    RAIDBOSS5,
 )
-
-RAIDBOSS1 = "Clockwork Hunter"
-RAIDBOSS2 = "Pot Tank"
-RAIDBOSS3 = "Broken Knight"
-RAIDBOSS4 = "Seamstress"
-RAIDBOSS5 = "Empowered  Valusia Warrior"

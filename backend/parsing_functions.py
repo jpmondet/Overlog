@@ -25,10 +25,13 @@ def get_struct_combat_line(combat_log_matched):
         "damages": (int)(combat_log_matched.group("damages")),
         "damage_taker": combat_log_matched.group("dude_hurt"),
         "dtaker_is_mob": False,
+        "dtaker_is_boss": False,
         "damage_dealer": combat_log_matched.group("damage_dealer"),
         "ddealer_is_mob": False,
+        "ddealer_is_boss": False,
         "crit": False,
         "heal": False,
+        "dung_name": "",
     }
 
     # Updating the struct with some specifics :
@@ -39,7 +42,7 @@ def get_struct_combat_line(combat_log_matched):
         struct_log["crit"] = True
         struct_log["damage_dealer"] = "".join(
             struct_log["damage_dealer"].split()[:-1]
-        )
+        ).strip()
 
     if "(" in struct_log["damage_dealer"]:
         # Players are not allowed to have parenthesis in their name
@@ -48,7 +51,15 @@ def get_struct_combat_line(combat_log_matched):
         # TODO: Replace this 'id' extraction by a better regex pattern
         splitted_name = struct_log["damage_dealer"].split("(")
         struct_log["id_ddealer"] = (int)("".join(splitted_name[-1])[:-1])
-        struct_log["damage_dealer"] = "".join(splitted_name[0])
+        struct_log["damage_dealer"] = "".join(splitted_name[0]).strip()
+        if not struct_log["damage_dealer"]:
+            # print("Id_dealer with no name...: {}".format(splitted_name))
+            pass
+        elif struct_log["damage_dealer"] in DUNGEON_BOSSES_TUPLE:
+            struct_log["ddealer_is_boss"] = True
+            struct_log["dung_name"] = BOSSES_DUNGEON_DICT[
+                struct_log["damage_dealer"]
+            ]
 
     if "(" in struct_log["damage_taker"]:
         # Players are not allowed to have parenthesis in their name
@@ -58,9 +69,15 @@ def get_struct_combat_line(combat_log_matched):
         struct_log["dtaker_is_mob"] = True
         splitted_name = struct_log["damage_taker"].split("(")
         struct_log["id_dtaker"] = (int)("".join(splitted_name[-1])[:-1])
-        struct_log["damage_taker"] = "".join(splitted_name[0])
+        struct_log["damage_taker"] = "".join(splitted_name[0]).strip()
         if not struct_log["damage_taker"]:
-            print(combat_log_matched)
+            # print("Id_taker with no name...: {}".format(splitted_name))
+            pass
+        elif struct_log["damage_taker"] in DUNGEON_BOSSES_TUPLE:
+            struct_log["dtaker_is_boss"] = True
+            struct_log["dung_name"] = BOSSES_DUNGEON_DICT[
+                struct_log["damage_taker"]
+            ]
 
     if struct_log["damages"] < 0:
         struct_log["heal"] = True
@@ -311,6 +328,7 @@ def update_details_stats_superdict_with_combat(infos, super_dict):
         to store it as:
 
         run_name : {
+            dung_name: (if we find out which one it is),
             Target : { # Target is the name of the player or the ID of the Monster
                 Name : "target_name" (if player, it's the same as Target),
                 Dealer1 : {"tot_dmgs", "details": [(dmg_tuple1), (dmg_tuple2)...]}
@@ -322,6 +340,8 @@ def update_details_stats_superdict_with_combat(infos, super_dict):
             }
         }
     """
+    if infos["dung_name"]:
+        super_dict["current_combats"]["dung_name"] = infos["dung_name"]
     target = (
         infos["damage_taker"] if not infos["id_dtaker"] else infos["id_dtaker"]
     )
@@ -339,6 +359,7 @@ def update_details_stats_superdict_with_combat(infos, super_dict):
     if not super_dict["current_combats"].get(target):
         super_dict["current_combats"][target] = {
             "Name": infos["damage_taker"],
+            "Boss": infos["dtaker_is_boss"],
             "Misc": {},
         }
     if not super_dict["current_combats"][target].get(dealer):
@@ -348,6 +369,7 @@ def update_details_stats_superdict_with_combat(infos, super_dict):
             )
         super_dict["current_combats"][target][dealer] = {
             "tot_dmgs": infos["damages"],
+            "Boss": infos["ddealer_is_boss"],
             "details": [dmgs_tuple],
         }
     else:
@@ -382,8 +404,10 @@ def update_overall_stats_superdict_with_combat(infos, super_dict):
             "damages": (int)(combat_log_matched.group("damages")),
             "damage_taker": combat_log_matched.group("dude_hurt"),
             "dtaker_is_mob": False,
+            "dtaker_is_boss": False,
             "damage_dealer": combat_log_matched.group("damage_dealer"),
             "ddealer_is_mob": False,
+            "ddealer_is_boss": False,
             "crit": False,
             "heal": False,
         }
@@ -567,9 +591,14 @@ def build_stats_superdict(line, super_dict=None):
             # the player left a combat without starting it on the first place..
             # We ignore this combat to avoid weird calculations
             return super_dict
-        super_dict["overall_combat_time"] = super_dict[
-            "overall_combat_time"
-        ] + (line_infos - super_dict["current_combat_time"])
+        try:
+            super_dict["overall_combat_time"] = super_dict[
+                "overall_combat_time"
+            ] + (line_infos - super_dict["current_combat_time"])
+        except TypeError:
+            # TODO: Lil' bug here.. When watching a file, there is
+            # a weird typeerror. To investigate..
+            super_dict["current_combat_time"] = timedelta(0)
         super_dict["current_combat_time"] = timedelta(0)
         return super_dict
 
