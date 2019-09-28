@@ -166,6 +166,7 @@ def detailed_stats_console_display(args, super_dict):
 
     # TODO : Use args to know what to display
     # For now, it's only sorted dmgs on bosses
+    # TODO: Add dmgs/sec
     system("cls" if nme == "nt" else "clear")
 
     for dung, details_dung in super_dict.items():

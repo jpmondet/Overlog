@@ -63,6 +63,8 @@ optional arguments:
                         (like xp/gold/rep, nbr of dungeons, time in combat,
                         maybe more?)
   -lo, --loots          Display all the loots acquired
+  -b, --boss            Display details on Bosses for the dungeons found in
+                        the log file /!\ Can only display top dmgs for now
   --version             show program's version number and exit
 ```
 
@@ -130,7 +132,6 @@ And btw, you were in combat for 1:36:50.602000 hour(s)
 ```
 (Note that the combat time is the time you were ACTUALLY fighting in combat mode, not the time in a dungeon or something like that)
 
-
 ##### Display the loots you acquired during the session
 
 **/!\ Preliminaries must have been done**
@@ -144,6 +145,37 @@ It could be of some use for farmers (or to validate `luck` calculations maybe ;-
 All the options shown above can be mixed up, for example the following will work : 
 
 `C:\Whatever-path-you-have\overlog.exe -f -r 10 -d -hlc -m`
+
+##### (NEW) Display the top dmgs on each boss from each dungeons found in the logfile
+
+**/!\ Preliminaries must have been done**
+
+By using the `-b` flag, you can display the top damages on each bosses found in the `combat.log` sorted by Dungeons.
+
+For example : 
+
+`C:\Whatever-path-you-have\overlog.exe -b`
+```
+##############################
+DETAILS FOR BOSSES IN AIRSHIP
+##############################
+
+CHAOS PURITY
+--------------------
+Melghor 6384831
+lawzy 5389867
+Nerozarg 4544421
+Breaking 3688278
+Metris 445152
+
+CHAOS HUNTER
+--------------------
+Melghor 4936085
+Nerozarg 3218835
+Breaking 2251942
+lawzy 1849676
+Metris 285690
+```
 
 ### Python3 users (linux/windows/...)
 
