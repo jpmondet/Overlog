@@ -94,12 +94,12 @@ def get_struct_combat_line(combat_log_matched):
     return struct_log
 
 
-def get_timedelta_from_matched(matched):
+def convert_str_time_to_timedelta(str_time):
     """
-        This func parse the line passed in param to get the time
-        Return : A handy timedelta to allow easy operations.
+        Generalize conversion to be able to use it outside
+        get_timedelta_from_matched.
     """
-    time_l = matched["time"].split(":")
+    time_l = str_time.split(":")
     hour = (int)(time_l[0])
     minu = (int)(time_l[1])
     sec = (int)(time_l[2])
@@ -108,6 +108,14 @@ def get_timedelta_from_matched(matched):
     return timedelta(
         hours=hour, minutes=minu, seconds=sec, milliseconds=milsec
     )
+
+
+def get_timedelta_from_matched(matched):
+    """
+        This func parse the line passed in param to get the time
+        Return : A handy timedelta to allow easy operations.
+    """
+    return convert_str_time_to_timedelta(matched["time"])
 
 
 # pylint: disable=too-many-return-statements

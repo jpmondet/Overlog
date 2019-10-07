@@ -11,7 +11,7 @@ from argparse import ArgumentParser
 from backend.parsing_functions import watch_and_parse_file, parse_file
 from frontend.console import console_display
 
-# pylint: disable=line-too-long, bad-continuation, anomalous-backslash-in-string
+# pylint: disable=line-too-long, bad-continuation, anomalous-backslash-in-string, fixme
 
 USER_PATH = ""
 
@@ -122,6 +122,8 @@ def main():
     """
         Parse the args passed by the user and implements the core logic of the script
     """
+
+    # TODO: Handle config/args with Hydra ? Could be cleaner
 
     args = handle_arguments()
 

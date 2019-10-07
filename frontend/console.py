@@ -7,6 +7,8 @@
 # pylint: disable=bad-continuation, fixme
 
 from os import system, name as nme
+from datetime import timedelta
+from backend.parsing_functions import convert_str_time_to_timedelta
 
 
 def sort_and_dict_display(combat_dict, phrase, suffix_per_line):
@@ -110,9 +112,11 @@ def sort_detailed_dpsers(target_details_dict):
         consistent and must be checked (so it's a bit too
         much convulated for a lambda)
 
-        As a first quick & dirty way, we can transform
+        As a first quick & dirty way, we transform
         the dict to a list of actual dpsers (without
         misc things)
+        We add to this list its dmgs
+        # TODO: and its dmgs/sec !
 
         Then we sort
     """
@@ -124,19 +128,27 @@ def sort_detailed_dpsers(target_details_dict):
     for dpser, hits in target_details_dict.items():
         if dpser in not_used:
             continue
-        # if dpser == "Name":
-        #     continue
-        # if dpser == "Boss":
-        #     continue
         # if dpser == "Misc":
-        #     continue
         # for misc_dpser, misc_hits in hits.items():
         #     print(
         #         "misc_thingy: {}, {}".format(
         #             misc_hits["Name"], misc_hits["tot_dmgs"]
         #         )
         #     )
-        dpsers_list.append((dpser, hits["tot_dmgs"]))
+        # TODO: dmg/sec healths/sec tot_healths should be calculated in
+        # the backend
+        time0 = convert_str_time_to_timedelta(hits["details"][0][0])
+        time1 = convert_str_time_to_timedelta(hits["details"][-1][0])
+        duration = timedelta(0)
+        duration = time1 - time0
+        dmg_sec = hits["tot_dmgs"] / duration.total_seconds()
+        # for hit in hits['details']:
+        #    time, dmg, crit, heal = hit
+        #    if heal:
+        #        continue
+        #    print(time,dmg,crit)
+
+        dpsers_list.append((dpser, hits["tot_dmgs"], dmg_sec))
 
     sorted_dpsers = sorted(dpsers_list, key=lambda kv: kv[1], reverse=True)
 
@@ -166,7 +178,6 @@ def detailed_stats_console_display(args, super_dict):
 
     # TODO : Use args to know what to display
     # For now, it's only sorted dmgs on bosses
-    # TODO: Add dmgs/sec
     system("cls" if nme == "nt" else "clear")
 
     for dung, details_dung in super_dict.items():
@@ -196,8 +207,11 @@ def detailed_stats_console_display(args, super_dict):
                 print("-" * 20)
                 sorted_dict = sort_detailed_dpsers(details_target)
 
-                for dpser, hits in sorted_dict:
-                    print(dpser, hits)
+                # TODO: Handle healers (their 'tot_dmgs' count as dmgs insteal of heals right now)
+                for dpser, hits, dmg_sec in sorted_dict:
+                    print(
+                        "{} {} ({} dmgs/sec)".format(dpser, hits, int(dmg_sec))
+                    )
     return args
 
 
