@@ -155,27 +155,26 @@ By using the `-b` flag, you can display the top damages on each bosses found in 
 For example : 
 
 `C:\Whatever-path-you-have\overlog.exe -b`
+
 ```
 ##############################
-DETAILS FOR BOSSES IN AIRSHIP
+DETAILS FOR BOSSES IN RAID
 ##############################
 
-CHAOS PURITY
+CLOCKWORK HUNTER
 --------------------
-Melghor 6384831
-lawzy 5389867
-Nerozarg 4544421
-Breaking 3688278
-Metris 445152
-
-CHAOS HUNTER
---------------------
-Melghor 4936085
-Nerozarg 3218835
-Breaking 2251942
-lawzy 1849676
-Metris 285690
+Melghor 1822182 (28020 dmgs/sec)
+Breaking 1814252 (28370 dmgs/sec)
+Piupau 1548912 (24179 dmgs/sec)
+Metris 1351206 (21485 dmgs/sec)
+Nerozarg 1318247 (22645 dmgs/sec)
+Puckade 1066059 (19016 dmgs/sec)
+Ozymandias 1035668 (19056 dmgs/sec)
+Shazul 766954 (11583 dmgs/sec)
+Bastiani 265928 (5369 dmgs/sec)
+Eletarion 70171 (1165 dmgs/sec)
 ```
+
 
 ### Python3 users (linux/windows/...)
 
